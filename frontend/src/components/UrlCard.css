@@ -1,0 +1,58 @@
+.url-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.url-card__code {
+  display: block;
+  margin: 0 0 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.url-card__code:hover {
+  text-decoration: underline;
+}
+
+.url-card__original {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9rem;
+  word-break: break-all;
+  text-decoration: none;
+}
+
+.url-card__original:hover {
+  color: var(--accent);
+}
+
+.url-card__meta {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.url-card__delete {
+  flex-shrink: 0;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--danger);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.url-card__delete:hover {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
