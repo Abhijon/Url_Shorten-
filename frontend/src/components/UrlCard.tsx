@@ -20,14 +20,14 @@ export function UrlCard({ url, onDelete }: UrlCardProps) {
         <a className="url-card__code" href={shortUrl} target="_blank" rel="noreferrer">
           {shortUrl}
         </a>
-        <a
+        {/* <a
           className="url-card__original"
           href={url.originalUrl}
           target="_blank"
           rel="noreferrer"
         >
           {url.originalUrl}
-        </a>
+        </a> */}
         <p className="url-card__meta">{url.clickCount} clicks</p>
       </div>
       {onDelete ? (

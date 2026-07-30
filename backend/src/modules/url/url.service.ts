@@ -52,7 +52,11 @@ export class UrlService {
     }
 
     try {
-      await redis.del(this.cacheKey(deleted.shortCode));
+      await redis.del(
+        this.cacheKey(deleted.shortCode),
+        `cache:hits:${deleted.shortCode}`,
+        `cache:misses:${deleted.shortCode}`
+      );
     } catch {
       // Cache invalidation failure should not block deletion
     }
@@ -67,9 +71,11 @@ export class UrlService {
     try {
       const cached = await redis.get(key);
       if (cached) {
+        await redis.incr(`cache:hits:${shortCode}`).catch(() => undefined);
         await urlRepository.incrementClickCount(shortCode).catch(() => undefined);
         return cached;
       }
+      await redis.incr(`cache:misses:${shortCode}`).catch(() => undefined);
     } catch {
       // On Redis errors, fall through to PostgreSQL
     }
