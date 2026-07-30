@@ -10,6 +10,9 @@ import { errorMiddleware } from './middleware/error.middleware.js';
 export function createApp() {
   const app = express();
 
+  // Render (and most proxies) forward the real client IP in X-Forwarded-For
+  app.set('trust proxy', 1);
+
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));

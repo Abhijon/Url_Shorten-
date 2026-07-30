@@ -90,12 +90,30 @@ export class UrlController {
         throw new AppError('Validation failed', 400, parsed.error.flatten());
       }
 
-      const originalUrl = await urlService.resolveShortCode(parsed.data.shortCode);
+      const clientIp = getClientIp(req);
+      const originalUrl = await urlService.resolveShortCode(
+        parsed.data.shortCode,
+        clientIp,
+      );
       res.redirect(302, originalUrl);
     } catch (error) {
       next(error);
     }
   }
+}
+
+/**
+ * Best-effort client IP for click dedupe (works behind Render with trust proxy).
+ */
+function getClientIp(req: Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.trim()) {
+    return forwarded.split(',')[0]?.trim() || 'unknown';
+  }
+  if (Array.isArray(forwarded) && forwarded[0]) {
+    return forwarded[0].split(',')[0]?.trim() || 'unknown';
+  }
+  return req.ip || req.socket.remoteAddress || 'unknown';
 }
 
 export const urlController = new UrlController();

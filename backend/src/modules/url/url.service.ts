@@ -5,6 +5,8 @@ import { urlRepository } from './url.repository.js';
 import type { CreateUrlInput, CreateUrlResult, UrlResponse } from './url.types.js';
 
 const CACHE_TTL_SECONDS = 60 * 60 * 24; // 24 hours
+/** Ignore duplicate redirect hits from the same client within this window. */
+const CLICK_DEDUPE_TTL_SECONDS = 3;
 
 /**
  * Business logic for URL shortening.
@@ -19,6 +21,8 @@ const CACHE_TTL_SECONDS = 60 * 60 * 24; // 24 hours
  * 4. Return original URL for redirect
  *
  * Creation intentionally does NOT populate the cache.
+ * Click counting is deduped per shortCode + client IP for a few seconds
+ * so browser retries / double GETs on deploy do not inflate counts.
  */
 export class UrlService {
   async createUrl(input: CreateUrlInput): Promise<CreateUrlResult> {
@@ -64,18 +68,25 @@ export class UrlService {
 
   /**
    * Resolves a short code to its original URL using Cache Aside.
+   * Duplicate requests from the same client within a short window
+   * still redirect, but do not increment click / hit / miss counters.
    */
-  async resolveShortCode(shortCode: string): Promise<string> {
+  async resolveShortCode(shortCode: string, clientIp = 'unknown'): Promise<string> {
     const key = this.cacheKey(shortCode);
+    const shouldCount = await this.claimClickSlot(shortCode, clientIp);
 
     try {
       const cached = await redis.get(key);
       if (cached) {
-        await redis.incr(`cache:hits:${shortCode}`).catch(() => undefined);
-        await urlRepository.incrementClickCount(shortCode).catch(() => undefined);
+        if (shouldCount) {
+          await redis.incr(`cache:hits:${shortCode}`).catch(() => undefined);
+          await urlRepository.incrementClickCount(shortCode).catch(() => undefined);
+        }
         return cached;
       }
-      await redis.incr(`cache:misses:${shortCode}`).catch(() => undefined);
+      if (shouldCount) {
+        await redis.incr(`cache:misses:${shortCode}`).catch(() => undefined);
+      }
     } catch {
       // On Redis errors, fall through to PostgreSQL
     }
@@ -91,8 +102,32 @@ export class UrlService {
       // Cache write failure should not block redirect
     }
 
-    await urlRepository.incrementClickCount(shortCode).catch(() => undefined);
+    if (shouldCount) {
+      await urlRepository.incrementClickCount(shortCode).catch(() => undefined);
+    }
     return url.originalUrl;
+  }
+
+  /**
+   * Atomically claims the right to count this click for (shortCode, ip).
+   * Returns true on first request in the window; false for duplicates.
+   * If Redis is unavailable, fails open and counts the click.
+   */
+  private async claimClickSlot(shortCode: string, clientIp: string): Promise<boolean> {
+    const dedupeKey = `click:dedupe:${shortCode}:${clientIp}`;
+    try {
+      const result = await redis.set(
+        dedupeKey,
+        '1',
+        'EX',
+        CLICK_DEDUPE_TTL_SECONDS,
+        'NX',
+      );
+      // ioredis: 'OK' when set, null when key already exists
+      return result === 'OK';
+    } catch {
+      return true;
+    }
   }
 
   private cacheKey(shortCode: string): string {
