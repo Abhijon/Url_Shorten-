@@ -80,8 +80,11 @@
   letter-spacing: 0.04em;
 }
 
-.url-form__result a {
+.url-form__short-url {
+  margin: 0;
   color: var(--accent);
+  font-family: var(--font-mono);
+  font-weight: 600;
   word-break: break-all;
 }
 

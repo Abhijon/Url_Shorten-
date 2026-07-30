@@ -21,6 +21,11 @@ export function UrlForm() {
     setCopied(true);
   }
 
+  function handleOpen(): void {
+    if (!data?.shortUrl) return;
+    window.open(data.shortUrl, '_blank', 'noopener,noreferrer');
+  }
+
   return (
     <section className="url-form">
       <form onSubmit={handleSubmit} className="url-form__form">
@@ -54,11 +59,12 @@ export function UrlForm() {
         <div className="url-form__result">
           <p className="url-form__result-label">Short URL</p>
           <div className="url-form__result-row">
-            <a href={data.shortUrl} target="_blank" rel="noreferrer">
-              {data.shortUrl}
-            </a>
+            <p className="url-form__short-url">{data.shortUrl}</p>
             <button type="button" className="url-form__copy" onClick={() => void handleCopy()}>
               {copied ? 'Copied' : 'Copy'}
+            </button>
+            <button type="button" className="url-form__copy" onClick={handleOpen}>
+              Open
             </button>
           </div>
         </div>
