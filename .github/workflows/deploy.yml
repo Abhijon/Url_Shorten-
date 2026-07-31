@@ -12,13 +12,63 @@ jobs:
 
     steps:
       - name: Trigger Backend Deployment
+        id: backend-deploy
         run: |
-          curl -X POST \
-          "https://api.render.com/v1/services/${{ secrets.RENDER_BACKEND_SERVICE_ID }}/deploys" \
-          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
+          RESPONSE=$(curl -s -X POST \
+            "https://api.render.com/v1/services/${{ secrets.RENDER_BACKEND_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}")
+          DEPLOY_ID=$(echo "$RESPONSE" | jq -r '.id')
+          echo "deploy_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
+          echo "Triggered backend deploy: $DEPLOY_ID"
+
+      - name: Wait for Backend Deployment to be Live
+        run: |
+          SERVICE_ID="${{ secrets.RENDER_BACKEND_SERVICE_ID }}"
+          DEPLOY_ID="${{ steps.backend-deploy.outputs.deploy_id }}"
+          for i in $(seq 1 60); do
+            STATUS=$(curl -s \
+              "https://api.render.com/v1/services/$SERVICE_ID/deploys/$DEPLOY_ID" \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.status')
+            echo "Backend deploy status: $STATUS"
+            if [ "$STATUS" = "live" ]; then
+              echo "Backend deployed successfully."
+              exit 0
+            elif [ "$STATUS" = "build_failed" ] || [ "$STATUS" = "update_failed" ] || [ "$STATUS" = "deactivated" ] || [ "$STATUS" = "canceled" ]; then
+              echo "Backend deployment failed with status: $STATUS"
+              exit 1
+            fi
+            sleep 15
+          done
+          echo "Timed out waiting for backend deployment to finish."
+          exit 1
 
       - name: Trigger Frontend Deployment
+        id: frontend-deploy
         run: |
-          curl -X POST \
-          "https://api.render.com/v1/services/${{ secrets.RENDER_FRONTEND_SERVICE_ID }}/deploys" \
-          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
+          RESPONSE=$(curl -s -X POST \
+            "https://api.render.com/v1/services/${{ secrets.RENDER_FRONTEND_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}")
+          DEPLOY_ID=$(echo "$RESPONSE" | jq -r '.id')
+          echo "deploy_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
+          echo "Triggered frontend deploy: $DEPLOY_ID"
+
+      - name: Wait for Frontend Deployment to be Live
+        run: |
+          SERVICE_ID="${{ secrets.RENDER_FRONTEND_SERVICE_ID }}"
+          DEPLOY_ID="${{ steps.frontend-deploy.outputs.deploy_id }}"
+          for i in $(seq 1 60); do
+            STATUS=$(curl -s \
+              "https://api.render.com/v1/services/$SERVICE_ID/deploys/$DEPLOY_ID" \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" | jq -r '.status')
+            echo "Frontend deploy status: $STATUS"
+            if [ "$STATUS" = "live" ]; then
+              echo "Frontend deployed successfully."
+              exit 0
+            elif [ "$STATUS" = "build_failed" ] || [ "$STATUS" = "update_failed" ] || [ "$STATUS" = "deactivated" ] || [ "$STATUS" = "canceled" ]; then
+              echo "Frontend deployment failed with status: $STATUS"
+              exit 1
+            fi
+            sleep 15
+          done
+          echo "Timed out waiting for frontend deployment to finish."
+          exit 1
