@@ -11,6 +11,14 @@ async function bootstrap(): Promise<void> {
   const app = createApp();
 
   try {
+    await prisma.$connect();
+    logger.info('Database connected successfully');
+  } catch (error) {
+    logger.error('Failed to connect to database', error);
+    process.exit(1);
+  }
+
+  try {
     await redis.connect();
   } catch (error) {
     logger.warn('Redis is not available yet; continuing without cache', error);
