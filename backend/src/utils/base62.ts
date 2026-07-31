@@ -4,8 +4,7 @@
  *
  * Example: encodeBase62(1000) === "g8"
  */
-const BASE62_ALPHABET =
-  '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const BASE62_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const BASE = BASE62_ALPHABET.length;
 

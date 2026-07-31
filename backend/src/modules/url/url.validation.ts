@@ -6,10 +6,7 @@ import { z } from 'zod';
  */
 
 export const createUrlSchema = z.object({
-  originalUrl: z
-    .string()
-    .min(1, 'originalUrl is required')
-    .url('originalUrl must be a valid URL'),
+  originalUrl: z.string().min(1, 'originalUrl is required').url('originalUrl must be a valid URL'),
 });
 
 export const urlIdParamSchema = z.object({
@@ -21,10 +18,7 @@ export const shortCodeParamSchema = z.object({
     .string()
     .min(1, 'shortCode is required')
     .max(16, 'shortCode is too long')
-    .regex(
-      /^[0-9a-zA-Z]+$/,
-      'shortCode must be a Base62 string',
-    ),
+    .regex(/^[0-9a-zA-Z]+$/, 'shortCode must be a Base62 string'),
 });
 
 export type CreateUrlDto = z.infer<typeof createUrlSchema>;
