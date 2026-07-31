@@ -43,11 +43,7 @@ export function UrlCard({ url, onDelete }: UrlCardProps) {
         </div>
       </div>
       {onDelete ? (
-        <button
-          type="button"
-          className="url-card__delete"
-          onClick={() => onDelete(url.id)}
-        >
+        <button type="button" className="url-card__delete" onClick={() => onDelete(url.id)}>
           Delete
         </button>
       ) : null}

@@ -1,0 +1,35 @@
+name: Branch Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - production
+
+jobs:
+  check-branch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Validate Branch Name
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          PATTERN="^(feat|fix|feature|bugfix|hotfix|chore|refactor|docs)/[a-z0-9._-]+$"
+
+          if [[ ! "$BRANCH" =~ $PATTERN ]]; then
+            echo "❌ Invalid branch name: $BRANCH"
+            echo ""
+            echo "Allowed formats:"
+            echo "  feat/login-api"
+            echo "  feature/url-shortener"
+            echo "  fix/cache-hit"
+            echo "  bugfix/prisma-error"
+            echo "  hotfix/render-deploy"
+            echo "  chore/update-eslint"
+            echo "  refactor/url-service"
+            echo "  docs/readme-update"
+            exit 1
+          fi
+
+          echo "✅ Branch name is valid!"

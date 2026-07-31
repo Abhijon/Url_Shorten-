@@ -5,9 +5,7 @@ import type { ApiSuccessResponse, CreateUrlPayload, CreateUrlResponse, Url } fro
  * API helpers for URL resources.
  */
 
-export async function createShortUrl(
-  payload: CreateUrlPayload,
-): Promise<CreateUrlResponse> {
+export async function createShortUrl(payload: CreateUrlPayload): Promise<CreateUrlResponse> {
   const { data } = await apiClient.post<ApiSuccessResponse<CreateUrlResponse>>(
     '/api/v1/urls',
     payload,

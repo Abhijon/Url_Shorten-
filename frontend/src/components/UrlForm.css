@@ -40,7 +40,9 @@
   font: inherit;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .url-form__submit:hover:not(:disabled) {

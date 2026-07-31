@@ -38,12 +38,7 @@ export class AppError extends Error {
 /**
  * Sends a consistent success JSON response.
  */
-export function sendSuccess<T>(
-  res: Response,
-  data: T,
-  statusCode = 200,
-  message?: string,
-): void {
+export function sendSuccess<T>(res: Response, data: T, statusCode = 200, message?: string): void {
   const body: ApiSuccessResponse<T> = {
     success: true,
     data,

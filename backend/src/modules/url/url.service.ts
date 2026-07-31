@@ -59,7 +59,7 @@ export class UrlService {
       await redis.del(
         this.cacheKey(deleted.shortCode),
         `cache:hits:${deleted.shortCode}`,
-        `cache:misses:${deleted.shortCode}`
+        `cache:misses:${deleted.shortCode}`,
       );
     } catch {
       // Cache invalidation failure should not block deletion
@@ -116,13 +116,7 @@ export class UrlService {
   private async claimClickSlot(shortCode: string, clientIp: string): Promise<boolean> {
     const dedupeKey = `click:dedupe:${shortCode}:${clientIp}`;
     try {
-      const result = await redis.set(
-        dedupeKey,
-        '1',
-        'EX',
-        CLICK_DEDUPE_TTL_SECONDS,
-        'NX',
-      );
+      const result = await redis.set(dedupeKey, '1', 'EX', CLICK_DEDUPE_TTL_SECONDS, 'NX');
       // ioredis: 'OK' when set, null when key already exists
       return result === 'OK';
     } catch {

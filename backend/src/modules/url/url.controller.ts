@@ -1,10 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { urlService } from './url.service.js';
-import {
-  createUrlSchema,
-  shortCodeParamSchema,
-  urlIdParamSchema,
-} from './url.validation.js';
+import { createUrlSchema, shortCodeParamSchema, urlIdParamSchema } from './url.validation.js';
 import { sendSuccess, AppError } from '../../utils/response.js';
 
 /**
@@ -91,10 +87,7 @@ export class UrlController {
       }
 
       const clientIp = getClientIp(req);
-      const originalUrl = await urlService.resolveShortCode(
-        parsed.data.shortCode,
-        clientIp,
-      );
+      const originalUrl = await urlService.resolveShortCode(parsed.data.shortCode, clientIp);
       res.redirect(302, originalUrl);
     } catch (error) {
       next(error);

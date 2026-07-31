@@ -21,8 +21,7 @@ export function errorMiddleware(
 
   logger.error('Unhandled error', err);
 
-  const message =
-    env.NODE_ENV === 'production' ? getErrorMessage(err) : getErrorMessage(err);
+  const message = env.NODE_ENV === 'production' ? getErrorMessage(err) : getErrorMessage(err);
 
   sendError(res, message, 500);
 }
