@@ -15,10 +15,7 @@ RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
 
-# Passed from docker-compose build.args (sourced from root .env)
-ARG DATABASE_URL
-ENV DATABASE_URL=$DATABASE_URL
-
+# generate does not need a real DATABASE_URL (see prisma.config.ts)
 RUN npx prisma generate
 RUN npm run build
 
