@@ -4,7 +4,7 @@ import { AppError } from '../../utils/response.js';
 import { urlRepository } from './url.repository.js';
 import type { CreateUrlInput, CreateUrlResult, UrlResponse } from './url.types.js';
 
-const CACHE_TTL_SECONDS = 60 * 60 * 24; // 24 hours
+const CACHE_TTL_SECONDS = 1 * 60;  // 24 hours
 /** Ignore duplicate redirect hits from the same client within this window. */
 const CLICK_DEDUPE_TTL_SECONDS = 3;
 
