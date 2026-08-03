@@ -26,6 +26,8 @@ router.get('/', (_req, res) => {
 router.use('/api/v1/urls', urlRouter);
 
 router.get('/:shortCode', redirectLimiter, (req, res, next) => {
+    console.log('Redirect route:', req.originalUrl);
+  console.log('Short code:', req.params.shortCode);
   void urlController.redirect(req, res, next);
 });
 
