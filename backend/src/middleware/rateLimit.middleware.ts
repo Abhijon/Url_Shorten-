@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { redis } from '../config/redis.js';
+import { getClientIp } from '../utils/clientIp.js';
 import { AppError } from '../utils/response.js';
 
 type RateLimitOptions = {
@@ -11,6 +12,37 @@ type RateLimitOptions = {
   /** Max allowed requests in the window per IP */
   maxRequests: number;
 };
+
+const DEBUG_EVENTS_KEY = 'rl:debug:events';
+const DEBUG_EVENTS_MAX = 50;
+const DEBUG_EVENTS_TTL_SECONDS = 60 * 60; // 1 hour
+
+/**
+ * Records a rate-limit rejection for the /debug/rate-limit endpoint.
+ * Best-effort — never blocks the request path.
+ */
+async function recordRateLimitEvent(input: {
+  prefix: string;
+  ip: string;
+  key: string;
+  maxRequests: number;
+  retryAfterSeconds: number;
+  path: string;
+  method: string;
+}): Promise<void> {
+  try {
+    const event = JSON.stringify({
+      at: new Date().toISOString(),
+      type: 'rate_limit_exceeded',
+      ...input,
+    });
+    await redis.lpush(DEBUG_EVENTS_KEY, event);
+    await redis.ltrim(DEBUG_EVENTS_KEY, 0, DEBUG_EVENTS_MAX - 1);
+    await redis.expire(DEBUG_EVENTS_KEY, DEBUG_EVENTS_TTL_SECONDS);
+  } catch {
+    // ignore debug write failures
+  }
+}
 
 /**
  * Sliding-window rate limiter backed by a Redis sorted set.
@@ -27,7 +59,7 @@ export function slidingWindowRateLimit(options: RateLimitOptions) {
   const { prefix, windowSeconds, maxRequests } = options;
 
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const ip = req.ip ?? 'unknown';
+    const ip = getClientIp(req);
     const key = `${prefix}:${ip}`;
     const now = Date.now();
     const windowStart = now - windowSeconds * 1000;
@@ -52,6 +84,16 @@ export function slidingWindowRateLimit(options: RateLimitOptions) {
         res.setHeader('X-RateLimit-Remaining', '0');
         res.setHeader('X-RateLimit-Reset', String(retryAfterSeconds));
 
+        void recordRateLimitEvent({
+          prefix,
+          ip,
+          key,
+          maxRequests,
+          retryAfterSeconds,
+          path: req.originalUrl,
+          method: req.method,
+        });
+
         next(
           new AppError('Too many requests', 429, {
             retryAfter: retryAfterSeconds,
@@ -75,3 +117,5 @@ export function slidingWindowRateLimit(options: RateLimitOptions) {
     }
   };
 }
+
+export { DEBUG_EVENTS_KEY };

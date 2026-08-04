@@ -10,8 +10,9 @@ import { errorMiddleware } from './middleware/error.middleware.js';
 export function createApp() {
   const app = express();
 
-  // Render (and most proxies) forward the real client IP in X-Forwarded-For
-  app.set('trust proxy', 1);
+  // Render sits behind Cloudflare + private LBs (10.x). Trust private hops so
+  // Express walks X-Forwarded-For past those proxies to the real client.
+  app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
   app.use(cors());
   app.use(express.json());
