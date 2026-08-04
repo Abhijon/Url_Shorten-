@@ -1,7 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
+import { getClientIp } from '../../utils/clientIp.js';
+import { sendSuccess, AppError } from '../../utils/response.js';
 import { urlService } from './url.service.js';
 import { createUrlSchema, shortCodeParamSchema, urlIdParamSchema } from './url.validation.js';
-import { sendSuccess, AppError } from '../../utils/response.js';
 
 /**
  * HTTP adapters for the URL module.
@@ -93,20 +94,6 @@ export class UrlController {
       next(error);
     }
   }
-}
-
-/**
- * Best-effort client IP for click dedupe (works behind Render with trust proxy).
- */
-function getClientIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.trim()) {
-    return forwarded.split(',')[0]?.trim() || 'unknown';
-  }
-  if (Array.isArray(forwarded) && forwarded[0]) {
-    return forwarded[0].split(',')[0]?.trim() || 'unknown';
-  }
-  return req.ip || req.socket.remoteAddress || 'unknown';
 }
 
 export const urlController = new UrlController();
